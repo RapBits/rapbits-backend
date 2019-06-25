@@ -9,6 +9,7 @@ func main() {
 
 	InitDB()
 
+	// TODO: Log api usage
 	http.HandleFunc("/upload", uploadRoute)
 	http.HandleFunc("/song/", songRoute)
 	http.HandleFunc("/songs", songsRoute)

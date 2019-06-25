@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rylio/ytdl"
 )
 
@@ -51,26 +54,28 @@ func uploadYTMP3Content(song *Song2Upload) error {
 		return err
 	}
 
-	mp4File, _ := os.Create(shortID + ".mp4")
-	defer mp4File.Close()
-	fmt.Println(vid.Formats)
-	err = vid.Download(vid.Formats[0], mp4File)
+	// Get mp4 video format
+	var downloadURL *url.URL
+	for _, v := range vid.Formats {
+		if v.Extension == "mp4" {
+			downloadURL, _ = vid.GetDownloadURL(v)
+			break
+		}
+	}
+
 	if err != nil {
-		fmt.Println("1")
 		return err
 	}
 
 	// parse when to begin video
 	startTime, err := strconv.Atoi(song.StartTime)
 	if err != nil {
-		fmt.Println("2")
 		return err
 	}
 
 	// parse when to end video
 	endTime, err := strconv.Atoi(song.EndTime)
 	if err != nil {
-		fmt.Println("3")
 		return err
 	}
 
@@ -78,27 +83,32 @@ func uploadYTMP3Content(song *Song2Upload) error {
 
 	// slice video
 	sliceFileName := shortID + ".mp4"
-	_, err = exec.Command("ffmpeg", "-ss", song.StartTime, "-t", amount, "-i", mp4File.Name(), sliceFileName).Output()
+	cmd := exec.Command("ffmpeg", "-i", downloadURL.String(), "-ss", song.StartTime, "-t", amount, sliceFileName)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err = cmd.Run()
 	if err != nil {
-		fmt.Println("4")
-		return err
+		return errors.Wrap(err, stderr.String())
 	}
 
 	// extract audio from video
 	rapbitFileName := shortID + ".mp3"
 	_, err = exec.Command("ffmpeg", "-i", sliceFileName, "-f", "mp3", "-ab", "100000", "-vn", rapbitFileName).Output()
 	if err != nil {
-		fmt.Println("5")
+		log.Fatal("Failed to perform ffmpeg")
 		return err
 	}
 
 	// retriev album cover image
+	var response *http.Response
 	if song.AlbumCover == nil {
-		*song.AlbumCover = vid.GetThumbnailURL(ytdl.ThumbnailQualityDefault).String()
+		response, err = http.Get(vid.GetThumbnailURL(ytdl.ThumbnailQualityDefault).String())
+	} else {
+		response, err = http.Get(*song.AlbumCover)
 	}
-	response, err := http.Get(*song.AlbumCover)
+
 	if err != nil {
-		fmt.Println("6")
+		log.Fatal("Failed to GET album cover")
 		return err
 	}
 	defer response.Body.Close()
@@ -106,14 +116,14 @@ func uploadYTMP3Content(song *Song2Upload) error {
 	// open a file for writing
 	contentType := response.Header.Get("Content-Type")
 	extType, err := mime.ExtensionsByType(contentType)
-	if err != nil && len(extType) > 0 {
-		fmt.Println("7")
+	if err != nil || len(extType) < 1 {
+		log.Fatal("Invalid ext type", extType)
 		return err
 	}
 
 	albumCoverImageFile, err := os.Create(shortID + extType[0])
 	if err != nil {
-		fmt.Println("WORLD")
+		log.Fatal("Failed to create album cover file")
 		return err
 	}
 	defer albumCoverImageFile.Close()
@@ -121,7 +131,6 @@ func uploadYTMP3Content(song *Song2Upload) error {
 	// Use io.Copy to just dump the response body to the file. This supports huge files
 	_, err = io.Copy(albumCoverImageFile, response.Body)
 	if err != nil {
-		fmt.Println("HELlo")
 		return err
 	}
 

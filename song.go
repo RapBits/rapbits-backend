@@ -25,6 +25,8 @@ func songRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TOOD: log which song was retrieved
+
 	m, err := json.Marshal(song)
 	if err != nil {
 		errStr := "Unable to find song: " + err.Error()

@@ -33,6 +33,8 @@ func songsRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: log that songs was retrieved and how many
+
 	m, err := json.Marshal(songsFromOffset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
