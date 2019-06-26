@@ -15,8 +15,8 @@ type Song struct {
 	Mp3        string
 	Mp4        string
 	Tags       string
-	Index      int64
 	ID         string
+	Index      int64
 }
 
 // InitDB will inititiate our sql connection session that will be used
@@ -46,7 +46,7 @@ func GetSongs(offset int, limit int) ([]*Song, error) {
 	songs := make([]*Song, 0)
 	for rows.Next() {
 		song := new(Song)
-		err := rows.Scan(&song.Song, &song.Lyric, &song.Artist, &song.AlbumCover, &song.Mp3, &song.Mp4, &song.ID, &song.Index, &song.Tags)
+		err := rows.Scan(&song.Song, &song.Lyric, &song.Artist, &song.AlbumCover, &song.Mp3, &song.Mp4, &song.Tags, &song.ID, &song.Index)
 		if err != nil {
 			return nil, err
 		}
@@ -65,7 +65,7 @@ func GetSong(id string) (*Song, error) {
 	row := db.QueryRow("SELECT * FROM songs WHERE id = ?", id)
 
 	song := new(Song)
-	err := row.Scan(&song.Song, &song.Lyric, &song.Artist, &song.AlbumCover, &song.Mp3, &song.Mp4, &song.ID, &song.Index, &song.Tags)
+	err := row.Scan(&song.Song, &song.Lyric, &song.Artist, &song.AlbumCover, &song.Mp3, &song.Mp4, &song.Tags, &song.ID, &song.Index)
 
 	if err != nil {
 		return nil, err
