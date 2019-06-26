@@ -59,11 +59,9 @@ func uploadYTMP3Content(song *Song2Upload) error {
 	// download video using script
 	cmd := exec.Command("/Users/umayahabdennabi/Desktop/github/go/src/github.com/rapbits-backend/download.sh", shortID, song.URL, song.StartTime, amount, song.AlbumCover)
 	var stderr bytes.Buffer
-	var stdout bytes.Buffer
 	cmd.Stderr = &stderr
-	cmd.Stdout = &stdout
-	err = cmd.Run()
-	if err != nil {
+
+	if err = cmd.Run(); err != nil {
 		return errors.Wrap(err, stderr.String())
 	}
 
@@ -90,12 +88,12 @@ func uploadRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = uploadYTMP3Content(song)
-	if err != nil {
+	if err := uploadYTMP3Content(song); err != nil {
 		http.Error(w, "Error processing upload request: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(m)
+
 }
