@@ -20,7 +20,8 @@ func songRoute(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "incorrect request "+r.URL.Path, http.StatusBadRequest)
 		return
 	}
-	song, err := GetSong(songID)
+
+	song, err := RetrieveSong(songID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

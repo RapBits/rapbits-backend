@@ -20,14 +20,7 @@ func songsRoute(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 
-	// parse limit query param, default to 30 if missing
-	limitStr := r.URL.Query().Get("limit")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil {
-		limit = 30
-	}
-
-	songsFromOffset, err := GetSongs(offset, limit)
+	songsFromOffset, err := RetrieveSongs(offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

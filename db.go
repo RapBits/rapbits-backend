@@ -35,10 +35,10 @@ func InitDB() {
 }
 
 // GetSongs will return `x` amount of songs starting from an offset `y` given
-// an offset `x` and a limit `y`
-func GetSongs(offset int, limit int) ([]*Song, error) {
+// an offset `x` and return up to 30 songs
+func GetSongs(offset int) ([]*Song, error) {
 
-	rows, err := db.Query("SELECT * FROM songs WHERE `index` >= ? limit ?", offset, limit)
+	rows, err := db.Query("SELECT * FROM songs WHERE `index` >= ? LIMIT 30", offset)
 	if err != nil {
 		return nil, err
 	}

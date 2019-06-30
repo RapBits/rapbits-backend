@@ -8,6 +8,7 @@ import (
 func main() {
 
 	InitDB()
+	InitCache()
 
 	// TODO: Log api usage
 	http.HandleFunc("/upload", uploadRoute)
