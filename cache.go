@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -51,8 +52,9 @@ func InitCache() {
 func RetrieveSong(songID string) (*Song, error) {
 	var err error
 	// try to retrieve from cache first
-	if entry, err := songCache.Get("songID"); err == nil {
+	if entry, err := songCache.Get(songID); err == nil {
 		cachedSong := new(Song)
+		fmt.Println("HIT THE CACHE")
 		if err = json.Unmarshal(entry, cachedSong); err == nil {
 			return cachedSong, nil
 		}
@@ -60,6 +62,7 @@ func RetrieveSong(songID string) (*Song, error) {
 
 	// if song isn't in cache retrieve from db and put in cache
 	if song, err := GetSong(songID); err == nil {
+		fmt.Println("DB")
 		songBytes := new(bytes.Buffer)
 		json.NewEncoder(songBytes).Encode(song)
 		songCache.Set(songID, songBytes.Bytes())
